@@ -18,6 +18,19 @@ impl Vector2 {
     pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
+
+    pub fn length(self) -> f32 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    pub fn normalized_or_zero(self) -> Self {
+        let length = self.length();
+        if length > 1e-6 {
+            self / length
+        } else {
+            Self::zero()
+        }
+    }
 }
 
 impl Add for Vector2 {
@@ -78,5 +91,14 @@ mod tests {
         let dot_product = first_vector.dot(second_vector);
 
         assert!((dot_product - 14.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn normalized_vector_has_unit_length() {
+        let vector = Vector2::new(3.0, 4.0);
+
+        let normalized_vector = vector.normalized_or_zero();
+
+        assert!((normalized_vector.length() - 1.0).abs() < 1e-6);
     }
 }

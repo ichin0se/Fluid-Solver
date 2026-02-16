@@ -6,6 +6,7 @@ pub struct FluidSolverApplication {
     affine_particle_in_cell_solver: AffineParticleInCellSolver,
     simulation_steps_per_frame: usize,
     time_step_seconds: f32,
+    is_simulation_paused: bool,
 }
 
 impl FluidSolverApplication {
@@ -14,6 +15,7 @@ impl FluidSolverApplication {
             affine_particle_in_cell_solver: AffineParticleInCellSolver::new(48, 32, 0.03),
             simulation_steps_per_frame: 2,
             time_step_seconds: 1.0 / 120.0,
+            is_simulation_paused: false,
         }
     }
 }
@@ -26,17 +28,45 @@ impl eframe::App for FluidSolverApplication {
                 user_interface.add(
                     egui::Slider::new(&mut self.simulation_steps_per_frame, 1..=12).text("steps"),
                 );
+
                 user_interface.label("Time step (seconds)");
                 user_interface.add(
                     egui::Slider::new(&mut self.time_step_seconds, 1.0 / 300.0..=1.0 / 30.0)
                         .logarithmic(true),
                 );
+
+                let mut velocity_pic_blend =
+                    self.affine_particle_in_cell_solver.velocity_pic_blend();
+                user_interface.label("PIC blend");
+                if user_interface
+                    .add(egui::Slider::new(&mut velocity_pic_blend, 0.0..=1.0).text("ratio"))
+                    .changed()
+                {
+                    self.affine_particle_in_cell_solver
+                        .set_velocity_pic_blend(velocity_pic_blend);
+                }
+
+                let pause_button_label = if self.is_simulation_paused {
+                    "Resume"
+                } else {
+                    "Pause"
+                };
+                if user_interface.button(pause_button_label).clicked() {
+                    self.is_simulation_paused = !self.is_simulation_paused;
+                }
+
+                if user_interface.button("Reset").clicked() {
+                    self.affine_particle_in_cell_solver.reset();
+                    self.is_simulation_paused = true;
+                }
             });
         });
 
-        for _ in 0..self.simulation_steps_per_frame {
-            self.affine_particle_in_cell_solver
-                .advance(self.time_step_seconds);
+        if !self.is_simulation_paused {
+            for _ in 0..self.simulation_steps_per_frame {
+                self.affine_particle_in_cell_solver
+                    .advance(self.time_step_seconds);
+            }
         }
 
         egui::CentralPanel::default().show(context, |user_interface| {
