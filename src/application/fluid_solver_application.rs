@@ -66,7 +66,6 @@ impl eframe::App for FluidSolverApplication {
                 ),
                 0.0,
                 egui::Stroke::new(1.0, egui::Color32::LIGHT_GRAY),
-                egui::StrokeKind::Inside,
             );
 
             for particle in self.affine_particle_in_cell_solver.particles() {
